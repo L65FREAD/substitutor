@@ -2,25 +2,31 @@ console.log("contentScript.js loaded");
 
 // This function will be executed when the content script is injected
 function modifyDOM() {
-  // Append "hello" to all paragraph elements
   const paragraphs = document.querySelectorAll("p");
   let paraArray = [];
+  let maxCount = 1024 - 150;
+  let runningCount = 0;
 
-  paragraphs.forEach((p) => {
-    paraArray.push(p.textContent);
-  });
+  for (let i = 0; i < paragraphs.length; i++) {
+    runningCount += paragraphs[i].textContent.split(" ").length;
+    if (runningCount > maxCount) {
+      runningCount = 0;
+      break;
+    }
+    paraArray.push(paragraphs[i].textContent);
+  }
 
   getResponseFromOpenAI(JSON.stringify(paraArray), (response) => {
-    console.log(response);
+    console.table(response);
     const res = JSON.parse(response);
     for (let i = 0; i < res.length; i++) {
+      //TODO: Deign UI for the translation
       paragraphs[i].textContent = res[i];
     }
   });
 }
 
-// Call the function immediately upon script execution
-// modifyDOM();
+modifyDOM();
 
 function getResponseFromOpenAI(message, callback) {
   chrome.runtime.sendMessage(
