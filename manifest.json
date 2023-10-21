@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "substitutor",
+  "version": "1.0",
+  "description": "A simple Chrome extension using Manifest V3",
+  "permissions": ["activeTab"],
+  "icons": {
+    "128": "icons/icon-128.png"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": "icons/icon-34.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["contentScript.js"],
+      "run_at": "document_end"
+    }
+  ]
+}
