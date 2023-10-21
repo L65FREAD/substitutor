@@ -1,70 +1,82 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Popup</title>
     <style>
-        body {
-            background-color: #3ca293;
-            color: white;
-            font-size: 16px;
-            padding: 20px;
-        }
+      body {
+        background-color: #3ca293;
+        color: white;
+        font-size: 16px;
+        padding: 20px;
+      }
 
-        /* Style the select element */
-        select {
-            background-color: white;
-            color: #3ca293;
-            width: 100%;
-            padding: 10px;
-            font-size: 16px;
-            margin: 0 auto;
-            border: 2px solid white; /* Add a border */
-            border-radius: 10px; /* Add rounded corners */
-        }
+      /* Style the select element */
+      select {
+        background-color: white;
+        color: #3ca293;
+        width: 100%;
+        padding: 10px;
+        font-size: 16px;
+        margin: 0 auto;
+        border: 2px solid white; /* Add a border */
+        border-radius: 10px; /* Add rounded corners */
+      }
 
-        .App {
-            width: 200px;
-            margin: 0 auto;
-        }
+      .App {
+        width: 200px;
+        margin: 0 auto;
+      }
 
-        /* Style the slider */
-        input[type="range"] {
-            -webkit-appearance: none; /* Remove default thumb appearance in webkit browsers */
-            appearance: none;
-            width: 100%;
-            background-color: white;
-            border: none; /* Remove the default border */
-            height: 4px; /* Make the line slightly thinner */
-        }
+      /* Style the slider */
+      input[type="range"] {
+        -webkit-appearance: none; /* Remove default thumb appearance in webkit browsers */
+        appearance: none;
+        width: 100%;
+        background-color: white;
+        border: none; /* Remove the default border */
+        height: 4px; /* Make the line slightly thinner */
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="App">
-        <header class="App-header">
-            <div class="DropdownWrapper">
-                <select class="Drop-down" id="languageSelect">
-                    <option value="English">English</option>
-                    <option value="Spanish">Spanish</option>
-                    <option value="French">French</option>
-                    <option value="German">German</option>
-                    <option value="Chinese">Chinese</option>
-                </select>
-            </div>
+      <header class="App-header">
+        <div class="DropdownWrapper">
+          <select class="Drop-down" id="languageSelect">
+            <option value="English">English</option>
+            <option value="Spanish">Spanish</option>
+            <option value="French">French</option>
+            <option value="German">German</option>
+            <option value="Chinese">Chinese</option>
+          </select>
+        </div>
 
-            <div class="Slider">
-                <h3 id="difficultyLabel">Difficulty: Medium</h3>
-                <input
-                    type="range"
-                    min="1"
-                    max="3"
-                    value="2"
-                    id="difficultyRange"
-                />
-            </div>
-        </header>
+        <div class="Slider">
+          <h3 id="difficultyLabel">Difficulty: Medium</h3>
+          <input type="range" min="1" max="3" value="2" id="difficultyRange" />
+        </div>
+        <div class="ButtonWrapper">
+          <button
+            id="saveButton"
+            style="
+              margin-top: 20px;
+              padding: 10px;
+              width: 100%;
+              border: 1px solid white;
+              border-radius: 10px;
+              background-color: #3ca293;
+              color: white;
+              cursor: pointer;
+              box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+            "
+          >
+            Save
+          </button>
+        </div>
+      </header>
     </div>
     <script src="popup.js"></script>
-</body>
+  </body>
 </html>

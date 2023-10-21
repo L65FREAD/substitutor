@@ -3,7 +3,7 @@
   "name": "substitutor",
   "version": "1.0",
   "description": "A simple Chrome extension using Manifest V3",
-  "permissions": ["activeTab"],
+  "permissions": ["activeTab", "scripting", "storage"],
   "icons": {
     "128": "icons/icon-128.png"
   },
@@ -20,5 +20,6 @@
       "js": ["contentScript.js"],
       "run_at": "document_end"
     }
-  ]
+  ],
+  "host_permissions": ["https://api.openai.com/"]
 }
