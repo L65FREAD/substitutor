@@ -8,6 +8,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 async function fetchOpenAIResponse(prompt) {
+  let translationQueue = [];
   const [difficulty, language] = await loadSettings();
   let content = "";
 
@@ -22,61 +23,48 @@ async function fetchOpenAIResponse(prompt) {
 
   switch (difficulty) {
     case "Hard":
-      const length = Math.ceil(prompt.length * 0.2);
+    case "Hard":
+      const length = Math.ceil(prompt.length * 0.25);
       randomIndices = getRandomIndices(prompt.length, length);
-      let selectedPrompts = randomIndices
-        .map((index) => prompt[index])
-        .join(" &&& ");
-      content = `Translate the following text to ${language}: ${selectedPrompts}`;
+      let selectedPrompts = randomIndices.map((index) => prompt[index]);
+      translationQueue.push(...selectedPrompts);
+      content = `Translate the following text to ${language}: ${selectedPrompts.join(
+        " &&& "
+      )}`;
       break;
     case "Easy":
-      let transContent = [];
       wordIndicesToTranslate = [];
-
       for (let i = 0; i < prompt.length; i++) {
         let words = prompt[i].split(/\s+/).filter((item) => item.trim() !== "");
-        let currentWordIndices = [];
-        let numberOfWordsToTranslate = Math.floor(0.2 * words.length); // Random number of words to translate
-
-        for (let j = 0; j < numberOfWordsToTranslate; j++) {
-          let randomWordIndex;
-          do {
-            randomWordIndex = Math.floor(Math.random() * words.length);
-          } while (currentWordIndices.includes(randomWordIndex)); // Ensure we don't pick the same word twice
-          currentWordIndices.push(randomWordIndex);
-        }
-
-        transContent.push(
-          currentWordIndices.map((idx) => words[idx]).join(" &&& ")
+        let currentWordIndices = getRandomIndices(
+          words.length,
+          Math.floor(0.2 * words.length)
         );
+        translationQueue.push(...currentWordIndices.map((idx) => words[idx]));
         wordIndicesToTranslate.push(currentWordIndices);
       }
-
-      content = `Translate the following words to ${language}: ${transContent}`;
+      content = `Translate the following words to ${language}: ${translationQueue.join(
+        " &&& "
+      )}`;
       break;
     case "Medium":
-      let contentForTranslation = [];
+      contentForTranslation = [];
+      translatedIndices = [];
+
       for (let i = 0; i < prompt.length; i++) {
-        let sentences = prompt[i].split(".");
-        let indicesToTranslate;
-        if (sentences.length == 1) {
-          if (Math.random() > 0.5) {
-            indicesToTranslate = [0];
-          } else {
-            indicesToTranslate = [];
-          }
-        } else {
-          let randomIndex = Math.floor(Math.random() * sentences.length);
-          indicesToTranslate = [randomIndex];
-        }
-        contentForTranslation.push(
-          sentences
-            .filter((_, idx) => indicesToTranslate.includes(idx))
-            .join(" &&& ")
-        );
-        translatedIndices.push(indicesToTranslate);
+        let sentences = prompt[i]
+          .split(".")
+          .filter((sentence) => sentence.trim());
+
+        let randomIndex = Math.floor(Math.random() * sentences.length);
+        contentForTranslation.push(sentences[randomIndex]);
+        translationQueue.push(sentences[randomIndex]);
+        translatedIndices[i] = randomIndex;
       }
-      content = `Translate the following text to ${language}: ${contentForTranslation}`;
+
+      content = `Translate the following text to ${language}: ${contentForTranslation.join(
+        " &&& "
+      )}`;
       break;
   }
 
@@ -93,6 +81,7 @@ async function fetchOpenAIResponse(prompt) {
       randomIndices,
       translatedIndices,
       wordIndicesToTranslate,
+      translationQueue,
       (translated) => {
         resolve(translated);
       }
@@ -107,6 +96,7 @@ function sendRequestToOpenAI(
   randomIndices,
   translatedIndices,
   wordIndicesToTranslate,
+  translationQueue,
   callback
 ) {
   const apiKey = "";
@@ -129,7 +119,7 @@ function sendRequestToOpenAI(
           for (let i = 0; i < randomIndices.length; i++) {
             prompt[randomIndices[i]] = `$#${splitVals[i]}$#`;
           }
-          translated = JSON.stringify(prompt);
+          translated = prompt;
         } else if (difficulty === "Easy") {
           let translatedWords = translated.split("&&&");
           for (let i = 0; i < prompt.length; i++) {
@@ -144,21 +134,17 @@ function sendRequestToOpenAI(
             }
             prompt[i] = words.join(" ");
           }
-          translated = JSON.stringify(prompt);
+          translated = prompt;
         } else if (difficulty === "Medium") {
           let translatedSentences = translated.split("&&&");
           for (let i = 0; i < prompt.length; i++) {
             let sentences = prompt[i].split(".");
-            for (let j = 0; j < translatedIndices[i].length; j++) {
-              sentences[
-                translatedIndices[i][j]
-              ] = `$#${translatedSentences.shift()}$#`;
-            }
+            sentences[translatedIndices[i]] = `$#${translatedSentences[i]}$#`;
             prompt[i] = sentences.join(".");
           }
-          translated = JSON.stringify(prompt);
+          translated = prompt;
         }
-        callback(translated);
+        callback(JSON.stringify([translated, translationQueue]));
       }
     })
     .catch((error) => {

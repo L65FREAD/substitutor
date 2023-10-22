@@ -16,20 +16,29 @@ function modifyDOM() {
   }
 
   getResponseFromOpenAI(paraArray, (response) => {
-    const res = JSON.parse(response);
+    const [res, translationQueue] = JSON.parse(response);
+    console.log(translationQueue);
     for (let i = 0; i < res.length; i++) {
-      const originalText = paraArray[i];
-      const translatedText = res[i].replace(
-        /\$\#(.*?)\$\#/g,
-        (match, p1) =>
-          `<span class="hoverable" style="background-color: rgba(60, 162, 147, 0.5);" data-original="${originalText}">${p1}</span>`
-      );
-      paragraphs[i].innerHTML = translatedText;
+      let paragraphTranslation = res[i];
+      let match;
+      const regex = /\$\#(.*?)\$\#/g;
+
+      // Loop through each occurrence of the regex and replace them one by one
+      while ((match = regex.exec(paragraphTranslation)) !== null) {
+        const originalText = translationQueue.shift();
+        paragraphTranslation = paragraphTranslation.replace(
+          match[0],
+          `<span class="hoverable" style="background-color: rgba(60, 162, 147, 0.5);" data-original="${originalText}">${match[1]}</span>`
+        );
+      }
+
+      paragraphs[i].innerHTML = paragraphTranslation;
     }
 
     attachHoverEvents();
   });
 }
+
 function countTokens(text) {
   return text.split(/\s+/).length;
 }
