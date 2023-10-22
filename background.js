@@ -1,43 +1,30 @@
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "translateText") {
-    fetchOpenAIResponse(message.prompt, (response) => {
+    fetchOpenAIResponse(message.prompt).then((response) => {
       sendResponse(response);
     });
-    return true; // Indicate asynchronous response
+    return true;
   }
 });
 
-function fetchOpenAIResponse(prompt, callback) {
-  const apiKey = "";
-  if (!apiKey) {
-    console.error("No API key found!");
-    return;
-  }
-
-  const [difficulty, language] = loadSettings();
-  const endpoint = "https://api.openai.com/v1/chat/completions";
+async function fetchOpenAIResponse(prompt) {
+  const [difficulty, language] = await loadSettings();
   let content = "";
+  let randomIndices = [];
 
   switch (difficulty) {
     case "Hard":
-      const length = Math.ceil(prompt.length * 0.3);
-      let randomIndices = [];
-      while (randomIndices.length < length) {
-        let rand = Math.floor(Math.random() * prompt.length);
-        if (!randomIndices.includes(rand)) {
-          randomIndices.push(rand);
-        }
-      }
-      let selectedPrompts = randomIndices.map((index) => prompt[index]);
-      content = `Translate the following paragraphs to ${language}: ${selectedPrompts.join(
-        " "
-      )}`;
+      const length = Math.ceil(prompt.length * 0.2);
+      randomIndices = getRandomIndices(prompt.length, length);
+      let selectedPrompts = randomIndices
+        .map((index) => prompt[index])
+        .join("&&&");
+      content = `Translate the following text to ${language}: ${selectedPrompts}`;
       break;
     case "Easy":
-      content = `Translate only a few words from the strings, and keep most of the words in the original language so that it is a mix of both the languages.`;
+      content = getStringForEasy(language, prompt);
       break;
     case "Medium":
-      // ... (Your existing Medium code)
       break;
   }
 
@@ -45,6 +32,29 @@ function fetchOpenAIResponse(prompt, callback) {
     messages: [{ role: "user", content }],
     model: "gpt-3.5-turbo",
   };
+
+  return new Promise((resolve, reject) => {
+    sendRequestToOpenAI(
+      payload,
+      difficulty,
+      prompt,
+      randomIndices,
+      (translated) => {
+        resolve(translated);
+      }
+    );
+  });
+}
+
+function sendRequestToOpenAI(
+  payload,
+  difficulty,
+  prompt,
+  randomIndices,
+  callback
+) {
+  const apiKey = "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";
+  const endpoint = "https://api.openai.com/v1/chat/completions";
 
   fetch(endpoint, {
     method: "POST",
@@ -57,15 +67,19 @@ function fetchOpenAIResponse(prompt, callback) {
     .then((response) => response.json())
     .then((data) => {
       if (data && data.choices && data.choices.length > 0) {
-        let translated = highlightTranslatedWord(data.choices[0].text.trim());
+        let translated = data.choices[0].message.content.trim();
         if (difficulty === "Hard") {
-          randomIndices.forEach((index, i) => {
-            prompt[index] = translated.split(" ")[i];
-          });
-          callback(prompt);
-        } else {
-          callback(translated);
+          let splitVals = translated.split("&&&");
+          for (let i = 0; i < randomIndices.length; i++) {
+            prompt[
+              randomIndices[i]
+            ] = `<span style="background-color: rgba(60, 162, 147, 0.5);" title="Original word: ${splitVals[i]}">${splitVals[i]}</span>`;
+          }
+          translated = JSON.stringify(prompt);
+        } else if (difficulty === "Easy") {
+          translated = highlightTranslatedWord(translated);
         }
+        callback(translated);
       }
     })
     .catch((error) => {
@@ -73,26 +87,28 @@ function fetchOpenAIResponse(prompt, callback) {
     });
 }
 
-function loadSettings() {
-  let selectedDifficulty = "Easy";
-  let selectedLanguage = "Spanish";
+async function loadSettings() {
+  return new Promise((resolve, reject) => {
+    let selectedDifficulty = "Easy";
+    let selectedLanguage = "Spanish";
 
-  chrome.storage.sync.get(["language", "difficulty"], function (data) {
-    if (data.language) {
-      selectedLanguage = data.language;
-    }
-
-    if (data.difficulty) {
-      if (data.difficulty === "1") {
-        selectedDifficulty = "Easy";
-      } else if (data.difficulty === "2") {
-        selectedDifficulty = "Medium";
-      } else if (data.difficulty === "3") {
-        selectedDifficulty = "Hard";
+    chrome.storage.sync.get(["language", "difficulty"], function (data) {
+      if (data.language) {
+        selectedLanguage = data.language;
       }
-    }
+
+      if (data.difficulty) {
+        if (data.difficulty === "1") {
+          selectedDifficulty = "Easy";
+        } else if (data.difficulty === "2") {
+          selectedDifficulty = "Medium";
+        } else if (data.difficulty === "3") {
+          selectedDifficulty = "Hard";
+        }
+      }
+      resolve([selectedDifficulty, selectedLanguage]);
+    });
   });
-  return [selectedDifficulty, selectedLanguage];
 }
 
 function highlightTranslatedWord(text) {
@@ -101,4 +117,17 @@ function highlightTranslatedWord(text) {
     regex,
     '<span style="background-color: yellow;">$1</span>'
   );
+}
+
+function getRandomIndices(max, count) {
+  let randomIndicesSet = new Set();
+  while (randomIndicesSet.size < count) {
+    randomIndicesSet.add(Math.floor(Math.random() * max));
+  }
+  return [...randomIndicesSet];
+}
+
+function getStringForEasy(language, prompt) {
+  return `While keeping the arrays the same, translate every seventh wor
+  [language]=${language} [text]= ${prompt} `;
 }

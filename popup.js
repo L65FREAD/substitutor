@@ -36,9 +36,7 @@ document.addEventListener("DOMContentLoaded", function () {
         language: selectedLanguage,
         difficulty: selectedDifficulty,
       },
-      function () {
-        console.log("Settings saved");
-      }
+      function () {}
     );
     window.close();
   });
