@@ -23,7 +23,7 @@ async function fetchOpenAIResponse(prompt) {
 
   switch (difficulty) {
     case "Hard":
-      const length = Math.ceil(prompt.length * 0.25);
+      const length = Math.ceil(prompt.length * 0.2);
       randomIndices = getRandomIndices(prompt.length, length);
       let selectedPrompts = randomIndices.map((index) => prompt[index]);
       translationQueue.push(...selectedPrompts);
@@ -37,7 +37,7 @@ async function fetchOpenAIResponse(prompt) {
         let words = prompt[i].split(/\s+/).filter((item) => item.trim() !== "");
         let currentWordIndices = getRandomIndices(
           words.length,
-          Math.floor(0.2 * words.length)
+          Math.floor(0.1 * words.length)
         );
         translationQueue.push(...currentWordIndices.map((idx) => words[idx]));
         wordIndicesToTranslate.push(currentWordIndices);
@@ -116,7 +116,7 @@ function sendRequestToOpenAI(
         if (difficulty === "Hard") {
           let splitVals = translated.split("&&&");
           for (let i = 0; i < randomIndices.length; i++) {
-            prompt[randomIndices[i]] = `$#${splitVals[i]}$#`;
+            prompt[randomIndices[i]] = `$#${splitVals[i].trim()}$#`;
           }
           translated = prompt;
         } else if (difficulty === "Easy") {
@@ -128,7 +128,9 @@ function sendRequestToOpenAI(
             for (let j = 0; j < wordIndicesToTranslate[i].length; j++) {
               let translatedWord = translatedWords.shift();
               if (translatedWord) {
-                words[wordIndicesToTranslate[i][j]] = `$#${translatedWord}$#`;
+                words[
+                  wordIndicesToTranslate[i][j]
+                ] = `$#${translatedWord.trim()}$#`;
               }
             }
             prompt[i] = words.join(" ");
@@ -138,7 +140,9 @@ function sendRequestToOpenAI(
           let translatedSentences = translated.split("&&&");
           for (let i = 0; i < prompt.length; i++) {
             let sentences = prompt[i].split(".");
-            sentences[translatedIndices[i]] = `$#${translatedSentences[i]}$#`;
+            sentences[translatedIndices[i]] = `$#${translatedSentences[
+              i
+            ].trim()}$#`;
             prompt[i] = sentences.join(".");
           }
           translated = prompt;
