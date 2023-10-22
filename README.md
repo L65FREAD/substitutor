@@ -1,24 +1,24 @@
 # Substitutor README
 
-## Description
+**Description:**
+Substitutor is a Chrome extension designed to facilitate language learning by providing in-browser translation for text elements.
 
-Substitutor is a Chrome extension that makes it easier for users to learn languages by enabling in-browser translation of text elements.
+**Installation:**
+1. Clone this repository.
+2. Add your OpenAI API key.
+3. Open Google Chrome and visit `chrome://extensions`.
+4. Enable Developer Mode.
+5. Click "Load Unpacked."
+6. Upload this repository and load the extension.
 
+**Usage:**
+1. After following the installation steps, pin the extension to your Chrome toolbar.
+2. Click the extension icon.
+3. Use the drop-down menu and slider to select the language you want to learn and the difficulty level.
+4. Wait for the extension to translate the text appropriately.
+5. Translated text will be highlighted in green. Hover over it to view the original text.
 
-## Installation
-
-1. Clone this Repository and add your OpenAI API key
-2. Open Google Chrome and search chrome://extensions
-3. Enable Developer Mode and click "Load Unpacked" 
-4. Upload this repository and load the extension
-
-## Usage
-
-After completing the above steps, be sure to pin the extension then click it and use the drop-down and slider select the language you want to learn and the difficulty level. From there wait for the extension to load and translate appropriately. If you're ever in doubt, remember the translated text is highlighted green and hover over it for the original!
-
-
-## Author
-
+**Author:**
 Created by Team Substitutor.
 
-
+Enjoy using Substitutor to enhance your language learning experience!
