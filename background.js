@@ -10,7 +10,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 async function fetchOpenAIResponse(prompt) {
   const [difficulty, language] = await loadSettings();
   let content = "";
+
+  // for hard
   let randomIndices = [];
+
+  // for medium
+  let translatedIndices = [];
 
   switch (difficulty) {
     case "Hard":
@@ -25,6 +30,30 @@ async function fetchOpenAIResponse(prompt) {
       content = getStringForEasy(language, prompt);
       break;
     case "Medium":
+      let contentForTranslation = [];
+      for (let i = 0; i < prompt.length; i++) {
+        let sentences = prompt[i].split(".");
+        let indicesToTranslate;
+        if (sentences.length == 1) {
+          if (Math.random() > 0.5) {
+            indicesToTranslate = [0];
+          } else {
+            indicesToTranslate = [];
+          }
+        } else {
+          let randomIndex = Math.floor(Math.random() * sentences.length);
+          indicesToTranslate = [randomIndex];
+        }
+        contentForTranslation.push(
+          sentences
+            .filter((_, idx) => indicesToTranslate.includes(idx))
+            .join(" &&& ")
+        );
+        translatedIndices.push(indicesToTranslate);
+      }
+      content = `Translate the following text to ${language}: ${contentForTranslation.join(
+        " &&& "
+      )}`;
       break;
   }
 
@@ -39,6 +68,7 @@ async function fetchOpenAIResponse(prompt) {
       difficulty,
       prompt,
       randomIndices,
+      translatedIndices,
       (translated) => {
         resolve(translated);
       }
@@ -51,6 +81,7 @@ function sendRequestToOpenAI(
   difficulty,
   prompt,
   randomIndices,
+  translatedIndices,
   callback
 ) {
   const apiKey = "";
@@ -76,6 +107,18 @@ function sendRequestToOpenAI(
           translated = JSON.stringify(prompt);
         } else if (difficulty === "Easy") {
           translated = highlightTranslatedWord(translated);
+        } else if (difficulty === "Medium") {
+          let translatedSentences = translated.split("&&&");
+          for (let i = 0; i < prompt.length; i++) {
+            let sentences = prompt[i].split(".");
+            for (let j = 0; j < translatedIndices[i].length; j++) {
+              sentences[
+                translatedIndices[i][j]
+              ] = `$#${translatedSentences.shift()}$#`;
+            }
+            prompt[i] = sentences.join(".");
+          }
+          translated = JSON.stringify(prompt);
         }
         callback(translated);
       }
