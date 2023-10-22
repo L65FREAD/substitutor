@@ -23,7 +23,6 @@ async function fetchOpenAIResponse(prompt) {
 
   switch (difficulty) {
     case "Hard":
-    case "Hard":
       const length = Math.ceil(prompt.length * 0.25);
       randomIndices = getRandomIndices(prompt.length, length);
       let selectedPrompts = randomIndices.map((index) => prompt[index]);

@@ -20,11 +20,11 @@ function modifyDOM() {
     console.log(translationQueue);
     for (let i = 0; i < res.length; i++) {
       let paragraphTranslation = res[i];
-      let match;
       const regex = /\$\#(.*?)\$\#/g;
+      let matches = [...paragraphTranslation.matchAll(regex)];
 
       // Loop through each occurrence of the regex and replace them one by one
-      while ((match = regex.exec(paragraphTranslation)) !== null) {
+      for (let match of matches) {
         const originalText = translationQueue.shift();
         paragraphTranslation = paragraphTranslation.replace(
           match[0],
