@@ -18,7 +18,7 @@ async function fetchOpenAIResponse(prompt) {
       randomIndices = getRandomIndices(prompt.length, length);
       let selectedPrompts = randomIndices
         .map((index) => prompt[index])
-        .join("&&&");
+        .join(" &&& ");
       content = `Translate the following text to ${language}: ${selectedPrompts}`;
       break;
     case "Easy":
@@ -71,9 +71,7 @@ function sendRequestToOpenAI(
         if (difficulty === "Hard") {
           let splitVals = translated.split("&&&");
           for (let i = 0; i < randomIndices.length; i++) {
-            prompt[
-              randomIndices[i]
-            ] = `<span style="background-color: rgba(60, 162, 147, 0.5);" title="Original word: ${splitVals[i]}">${splitVals[i]}</span>`;
+            prompt[randomIndices[i]] = `$#${splitVals[i]}$#`;
           }
           translated = JSON.stringify(prompt);
         } else if (difficulty === "Easy") {
