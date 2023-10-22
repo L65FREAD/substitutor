@@ -1,65 +1,71 @@
-// background.js
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "translateText") {
     fetchOpenAIResponse(message.prompt, (response) => {
       sendResponse(response);
     });
-
-    // This is important: it indicates that the response will be sent asynchronously
-    return true;
+    return true; // Indicate asynchronous response
   }
 });
 
 function fetchOpenAIResponse(prompt, callback) {
-  // Retrieve API key from Chrome storage (assuming you've set it there)
-  const apiKey = "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";
-
+  const apiKey = "";
   if (!apiKey) {
     console.error("No API key found!");
     return;
   }
+
   const [difficulty, language] = loadSettings();
+  const endpoint = "https://api.openai.com/v1/chat/completions";
+  let content = "";
 
   switch (difficulty) {
+    case "Hard":
+      const length = Math.ceil(prompt.length * 0.3);
+      let randomIndices = [];
+      while (randomIndices.length < length) {
+        let rand = Math.floor(Math.random() * prompt.length);
+        if (!randomIndices.includes(rand)) {
+          randomIndices.push(rand);
+        }
+      }
+      let selectedPrompts = randomIndices.map((index) => prompt[index]);
+      content = `Translate the following paragraphs to ${language}: ${selectedPrompts.join(
+        " "
+      )}`;
+      break;
     case "Easy":
+      content = `Translate only a few words from the strings, and keep most of the words in the original language so that it is a mix of both the languages.`;
       break;
     case "Medium":
-      break;
-    case "Hard":
+      // ... (Your existing Medium code)
       break;
   }
-  const endpoint = "https://api.openai.com/v1/chat/completions";
-  const sanitizedText = `translate only few words from the the strings, and keep most of the words in the original language so that it is a mix of both the languages, and retrun the the result array"
-  `;
-  // Define the request payload
+
   const payload = {
-    messages: [
-      {
-        role: "user",
-        content: sanitizedText + prompt,
-      },
-    ],
+    messages: [{ role: "user", content }],
     model: "gpt-3.5-turbo",
   };
 
-  // Make the fetch request
   fetch(endpoint, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`, // Replace with your actual API key
+      Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify(payload),
-    n: 1,
   })
     .then((response) => response.json())
     .then((data) => {
       if (data && data.choices && data.choices.length > 0) {
-        let cur = data.choices[0].text.trim().split("[");
-        let val = cur.length > 1 ? "[" + cur[1] : cur[0];
-        let styledText = highlightTranslatedWord(val);
-        console.log(styledText);
-        callback(styledText);
+        let translated = highlightTranslatedWord(data.choices[0].text.trim());
+        if (difficulty === "Hard") {
+          randomIndices.forEach((index, i) => {
+            prompt[index] = translated.split(" ")[i];
+          });
+          callback(prompt);
+        } else {
+          callback(translated);
+        }
       }
     })
     .catch((error) => {
@@ -68,7 +74,7 @@ function fetchOpenAIResponse(prompt, callback) {
 }
 
 function loadSettings() {
-  let selectedDifficulty = "Medium";
+  let selectedDifficulty = "Easy";
   let selectedLanguage = "Spanish";
 
   chrome.storage.sync.get(["language", "difficulty"], function (data) {

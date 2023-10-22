@@ -5,8 +5,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
   const saveButton = document.getElementById("saveButton");
 
-  let selectedDifficulty = "Medium";
-  let selectedLanguage = "English";
+  let selectedDifficulty = "Easy";
+  let selectedLanguage = "Spanish";
 
   languageSelect.addEventListener("change", function (e) {
     selectedLanguage = e.target.value;
