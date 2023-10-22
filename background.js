@@ -53,7 +53,7 @@ function sendRequestToOpenAI(
   randomIndices,
   callback
 ) {
-  const apiKey = "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";
+  const apiKey = "";
   const endpoint = "https://api.openai.com/v1/chat/completions";
 
   fetch(endpoint, {
