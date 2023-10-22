@@ -17,6 +17,9 @@ async function fetchOpenAIResponse(prompt) {
   // for medium
   let translatedIndices = [];
 
+  // for easy
+  let wordIndicesToTranslate = [];
+
   switch (difficulty) {
     case "Hard":
       const length = Math.ceil(prompt.length * 0.2);
@@ -27,7 +30,29 @@ async function fetchOpenAIResponse(prompt) {
       content = `Translate the following text to ${language}: ${selectedPrompts}`;
       break;
     case "Easy":
-      content = getStringForEasy(language, prompt);
+      let transContent = [];
+      wordIndicesToTranslate = [];
+
+      for (let i = 0; i < prompt.length; i++) {
+        let words = prompt[i].split(/\s+/).filter((item) => item.trim() !== "");
+        let currentWordIndices = [];
+        let numberOfWordsToTranslate = Math.floor(0.2 * words.length); // Random number of words to translate
+
+        for (let j = 0; j < numberOfWordsToTranslate; j++) {
+          let randomWordIndex;
+          do {
+            randomWordIndex = Math.floor(Math.random() * words.length);
+          } while (currentWordIndices.includes(randomWordIndex)); // Ensure we don't pick the same word twice
+          currentWordIndices.push(randomWordIndex);
+        }
+
+        transContent.push(
+          currentWordIndices.map((idx) => words[idx]).join(" &&& ")
+        );
+        wordIndicesToTranslate.push(currentWordIndices);
+      }
+
+      content = `Translate the following words to ${language}: ${transContent}`;
       break;
     case "Medium":
       let contentForTranslation = [];
@@ -51,9 +76,7 @@ async function fetchOpenAIResponse(prompt) {
         );
         translatedIndices.push(indicesToTranslate);
       }
-      content = `Translate the following text to ${language}: ${contentForTranslation.join(
-        " &&& "
-      )}`;
+      content = `Translate the following text to ${language}: ${contentForTranslation}`;
       break;
   }
 
@@ -69,6 +92,7 @@ async function fetchOpenAIResponse(prompt) {
       prompt,
       randomIndices,
       translatedIndices,
+      wordIndicesToTranslate,
       (translated) => {
         resolve(translated);
       }
@@ -82,6 +106,7 @@ function sendRequestToOpenAI(
   prompt,
   randomIndices,
   translatedIndices,
+  wordIndicesToTranslate,
   callback
 ) {
   const apiKey = "";
@@ -106,7 +131,20 @@ function sendRequestToOpenAI(
           }
           translated = JSON.stringify(prompt);
         } else if (difficulty === "Easy") {
-          translated = highlightTranslatedWord(translated);
+          let translatedWords = translated.split("&&&");
+          for (let i = 0; i < prompt.length; i++) {
+            let words = prompt[i]
+              .split(/\s+/)
+              .filter((item) => item.trim() !== "");
+            for (let j = 0; j < wordIndicesToTranslate[i].length; j++) {
+              let translatedWord = translatedWords.shift();
+              if (translatedWord) {
+                words[wordIndicesToTranslate[i][j]] = `$#${translatedWord}$#`;
+              }
+            }
+            prompt[i] = words.join(" ");
+          }
+          translated = JSON.stringify(prompt);
         } else if (difficulty === "Medium") {
           let translatedSentences = translated.split("&&&");
           for (let i = 0; i < prompt.length; i++) {
